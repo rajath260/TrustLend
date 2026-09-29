@@ -31,6 +31,13 @@ The initial MVP focuses on the core financial workflow:
 - Factual TrustLend repayment record
 - Basic notifications
 
+### Current product-policy boundary
+
+- MVP permits 0% APR interest-free loans.
+- MVP also supports a controlled interest-bearing mode using simple interest.
+- The current example product-policy cap is 15% APR and is configurable in code; it is **not** an RBI-mandated rate cap.
+- The selected policy version is stored with the loan and included in the agreement snapshot.
+
 ### Explicitly out of MVP
 
 TrustLend does **not** initially build:
@@ -117,6 +124,10 @@ AKS
     |
 Azure PostgreSQL / Redis / Service Bus / Key Vault / Monitoring
 ```
+
+## Mobile MVP
+
+The React Native shell now connects to the backend for loan creation, loan retrieval, and borrower agreement acceptance. Development uses deterministic demo identities until authentication is introduced.
 
 ## Financial lifecycle
 
