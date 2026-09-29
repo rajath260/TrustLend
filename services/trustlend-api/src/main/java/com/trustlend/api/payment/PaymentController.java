@@ -1,5 +1,6 @@
 package com.trustlend.api.payment;
 import jakarta.validation.Valid;
+import com.trustlend.api.api.PaymentResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -12,12 +13,12 @@ public class PaymentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Payment record(@PathVariable UUID loanId, @Valid @RequestBody PaymentRequest request) {
-        return service.record(loanId, request.amount(), request.idempotencyKey(), request.providerReference());
+    public PaymentResponse record(@PathVariable UUID loanId, @Valid @RequestBody PaymentRequest request) {
+        return PaymentResponse.from(service.record(loanId, request.amount(), request.idempotencyKey(), request.providerReference()));
     }
 
     @GetMapping
-    public List<Payment> get(@PathVariable UUID loanId) {
-        return service.getPayments(loanId);
+    public List<PaymentResponse> get(@PathVariable UUID loanId) {
+        return service.getPayments(loanId).stream().map(PaymentResponse::from).toList();
     }
 }
