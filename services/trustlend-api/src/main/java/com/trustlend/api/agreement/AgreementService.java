@@ -1,5 +1,6 @@
 package com.trustlend.api.agreement;
 
+import com.trustlend.api.audit.AuditEventService;
 import com.trustlend.api.loan.Loan;
 import com.trustlend.api.loan.LoanService;
 import org.springframework.stereotype.Service;
@@ -13,10 +14,13 @@ import java.util.UUID;
 public class AgreementService {
     private final AgreementRepository repository;
     private final LoanService loanService;
+    private final AuditEventService auditEventService;
 
-    public AgreementService(AgreementRepository repository, LoanService loanService) {
+    public AgreementService(AgreementRepository repository, LoanService loanService,
+                            AuditEventService auditEventService) {
         this.repository = repository;
         this.loanService = loanService;
+        this.auditEventService = auditEventService;
     }
 
     @Transactional
@@ -37,7 +41,10 @@ public class AgreementService {
         }
         agreement.accept(actorId);
         loanService.accept(loanId);
-        return repository.save(agreement);
+        Agreement saved = repository.save(agreement);
+        auditEventService.record(loanId, "LoanAccepted", "BORROWER",
+                "agreementVersion=" + agreement.getVersion() + ";actorId=" + actorId);
+        return saved;
     }
 
     @Transactional(readOnly = true)
