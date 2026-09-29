@@ -23,12 +23,18 @@ EXPO_PUBLIC_API_URL=http://localhost:8080
 
 For a physical device, replace `localhost` with a reachable development machine/API address.
 
+## Current repayment flow
+
+- Repayment schedule creation
+- Installment-level outstanding/status display
+- Mock payment recording
+- Backend payment allocation
+- Settlement generation
+- Settlement statement
+
 ## Planned next screens
 
 - Agreement Review
-- Repayment Schedule
-- Record Payment
-- Settlement Statement
 - Repayment Record
 
 ## Product boundary
