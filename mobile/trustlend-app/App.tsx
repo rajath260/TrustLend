@@ -50,7 +50,12 @@ export default function App() {
 
   async function handleCreateSchedule() {
     if (!loan) return;
-    await run(async () => { setSchedule(await createSchedule(loan.id, 4)); setScreen("schedule"); });
+    await run(async () => {
+      const createdSchedule = await createSchedule(loan.id, 4);
+      setSchedule(createdSchedule);
+      setLoan(await getLoan(loan.id));
+      setScreen("schedule");
+    });
   }
 
   async function handlePayment() {
