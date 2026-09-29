@@ -36,7 +36,10 @@ paths:
               type: object
               required: [actorId]
               properties:
-                actorId: { type: string, format: uuid }
+                actorId:
+                  type: string
+                  format: uuid
+                  description: Development-only actor identity. Production will derive actor identity from authenticated OIDC/OAuth context.
       responses:
         '200': { description: Agreement accepted }
   /api/v1/loans/{loanId}/schedule:
