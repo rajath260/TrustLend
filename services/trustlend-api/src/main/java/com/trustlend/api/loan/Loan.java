@@ -42,6 +42,9 @@ public class Loan {
     @Column(nullable = false)
     private Integer agreementVersion;
 
+    @Column(nullable = false, length = 32)
+    private String productPolicyVersion;
+
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -58,6 +61,7 @@ public class Loan {
         this.maturityDate = maturityDate;
         this.status = LoanStatus.PENDING_BORROWER_ACCEPTANCE;
         this.agreementVersion = 1;
+        this.productPolicyVersion = "MVP-1";
         this.createdAt = Instant.now();
     }
 
@@ -71,6 +75,7 @@ public class Loan {
     public LocalDate getMaturityDate() { return maturityDate; }
     public LoanStatus getStatus() { return status; }
     public Integer getAgreementVersion() { return agreementVersion; }
+    public String getProductPolicyVersion() { return productPolicyVersion; }
     public Instant getCreatedAt() { return createdAt; }
 
     public void accept() {
