@@ -79,4 +79,27 @@ public class Loan {
         }
         status = LoanStatus.ACCEPTED;
     }
+
+    public void activate() {
+        if (status != LoanStatus.ACCEPTED) {
+            throw new IllegalStateException("Loan must be accepted before activation");
+        }
+        status = LoanStatus.ACTIVE;
+    }
+
+    public void markPartiallyPaid() {
+        if (status != LoanStatus.ACTIVE && status != LoanStatus.DUE && status != LoanStatus.OVERDUE
+                && status != LoanStatus.PARTIALLY_PAID) {
+            throw new IllegalStateException("Loan cannot receive repayment in its current state");
+        }
+        status = LoanStatus.PARTIALLY_PAID;
+    }
+
+    public void settle() {
+        if (status != LoanStatus.ACTIVE && status != LoanStatus.DUE
+                && status != LoanStatus.OVERDUE && status != LoanStatus.PARTIALLY_PAID) {
+            throw new IllegalStateException("Loan cannot be settled in its current state");
+        }
+        status = LoanStatus.SETTLED;
+    } 
 }
