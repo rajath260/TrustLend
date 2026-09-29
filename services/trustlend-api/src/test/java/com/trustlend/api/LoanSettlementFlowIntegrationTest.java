@@ -9,6 +9,8 @@ import com.trustlend.api.payment.PaymentService;
 import com.trustlend.api.repayment.RepaymentService;
 import com.trustlend.api.repaymentrecord.RepaymentRecordService;
 import com.trustlend.api.settlement.SettlementService;
+import com.trustlend.api.security.ActorIdentity;
+import com.trustlend.api.security.LoanAuthorizationService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +33,7 @@ class LoanSettlementFlowIntegrationTest {
     @Autowired SettlementService settlementService;
     @Autowired RepaymentRecordService repaymentRecordService;
     @Autowired com.trustlend.api.payment.PaymentProvider paymentProvider;
+    @Autowired LoanAuthorizationService authorizationService;
 
     @Test
     void interestFreeLoanCanBeRepaidAndSettled() {
@@ -100,6 +103,19 @@ class LoanSettlementFlowIntegrationTest {
         assertEquals(new BigDecimal("200.00"), partiallyPaid.get(0).getInterestPaid());
         assertEquals(new BigDecimal("5000.00"), partiallyPaid.get(0).getPrincipalPaid());
         assertEquals(new BigDecimal("0.00"), partiallyPaid.get(0).getOutstanding());
+    }
+
+    @Test
+    void loanAuthorizationRejectsNonBorrower() {
+        UUID lender = UUID.randomUUID();
+        UUID borrower = UUID.randomUUID();
+        Loan loan = loanService.create(new CreateLoanRequest(
+                lender, borrower, new BigDecimal("1000.00"), BigDecimal.ZERO,
+                "NONE", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 1)));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> authorizationService.requireBorrower(loan, new ActorIdentity(UUID.randomUUID())));
+        assertDoesNotThrow(() -> authorizationService.requireBorrower(loan, new ActorIdentity(borrower)));
     }
 
     @Test
