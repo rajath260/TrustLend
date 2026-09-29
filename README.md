@@ -118,6 +118,10 @@ AKS
 Azure PostgreSQL / Redis / Service Bus / Key Vault / Monitoring
 ```
 
+## Financial lifecycle
+
+See [`docs/architecture/financial-lifecycle.md`](docs/architecture/financial-lifecycle.md) for the implemented agreement → repayment → allocation → settlement flow and its MVP/production boundary.
+
 ## Financial integrity principles
 
 - Never use floating-point values as the source of truth for money.
