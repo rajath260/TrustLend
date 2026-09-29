@@ -1,6 +1,7 @@
 package com.trustlend.api.settlement;
 
 import org.springframework.web.bind.annotation.*;
+import com.trustlend.api.api.SettlementResponse;
 import java.util.UUID;
 
 @RestController
@@ -10,12 +11,12 @@ public class SettlementController {
     public SettlementController(SettlementService service) { this.service = service; }
 
     @PostMapping
-    public Settlement settle(@PathVariable UUID loanId) {
-        return service.settle(loanId);
+    public SettlementResponse settle(@PathVariable UUID loanId) {
+        return SettlementResponse.from(service.settle(loanId));
     }
 
     @GetMapping
-    public Settlement get(@PathVariable UUID loanId) {
-        return service.get(loanId);
+    public SettlementResponse get(@PathVariable UUID loanId) {
+        return SettlementResponse.from(service.get(loanId));
     }
 }
