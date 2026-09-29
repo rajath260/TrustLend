@@ -50,8 +50,38 @@ public class PaymentAllocationService {
             throw new IllegalStateException("Payment exceeds remaining contractual obligation");
         }
 
-        return repository.save(new PaymentAllocation(
+        PaymentAllocation allocation = repository.save(new PaymentAllocation(
                 payment, loan, principal, interest, BigDecimal.ZERO));
+
+        applyToSchedule(loan.getId(), interest, principal);
+        return allocation;
+    }
+
+    private void applyToSchedule(UUID loanId, BigDecimal interestAmount, BigDecimal principalAmount) {
+        BigDecimal remainingInterest = interestAmount;
+        BigDecimal remainingPrincipal = principalAmount;
+
+        for (RepaymentSchedule schedule : scheduleRepository.findByLoanIdOrderByDueDate(loanId)) {
+            BigDecimal interestOpen = schedule.getInterestDue().subtract(schedule.getInterestPaid()).max(BigDecimal.ZERO);
+            BigDecimal principalOpen = schedule.getPrincipalDue().subtract(schedule.getPrincipalPaid()).max(BigDecimal.ZERO);
+
+            BigDecimal interest = remainingInterest.min(interestOpen);
+            remainingInterest = remainingInterest.subtract(interest);
+
+            BigDecimal principal = remainingPrincipal.min(principalOpen);
+            remainingPrincipal = remainingPrincipal.subtract(principal);
+
+            if (interest.signum() > 0 || principal.signum() > 0) {
+                schedule.applyPayment(principal, interest);
+                scheduleRepository.save(schedule);
+            }
+
+            if (remainingInterest.signum() == 0 && remainingPrincipal.signum() == 0) break;
+        }
+
+        if (remainingInterest.signum() > 0 || remainingPrincipal.signum() > 0) {
+            throw new IllegalStateException("Payment allocation could not be applied to repayment schedule");
+        }
     }
 
     @Transactional(readOnly = true)
