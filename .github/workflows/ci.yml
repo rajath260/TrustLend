@@ -30,4 +30,4 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Run backend tests
-        run: ./mvnw test -q
+        run: mvn test -q
