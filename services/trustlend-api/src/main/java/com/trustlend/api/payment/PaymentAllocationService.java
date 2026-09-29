@@ -5,6 +5,7 @@ import com.trustlend.api.repayment.RepaymentSchedule;
 import com.trustlend.api.repayment.RepaymentScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -29,59 +30,38 @@ public class PaymentAllocationService {
         if (existing.isPresent()) return existing.get();
 
         Loan loan = payment.getLoan();
+        BigDecimal remainingPayment = payment.getAmount();
+        BigDecimal totalInterest = BigDecimal.ZERO;
+        BigDecimal totalPrincipal = BigDecimal.ZERO;
 
-        BigDecimal scheduledInterest = scheduleRepository.findByLoanIdOrderByDueDate(loan.getId()).stream()
-                .map(RepaymentSchedule::getInterestDue)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal allocatedInterest = repository.findByLoanId(loan.getId()).stream()
-                .map(PaymentAllocation::getInterestAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal allocatedPrincipal = repository.findByLoanId(loan.getId()).stream()
-                .map(PaymentAllocation::getPrincipalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        for (RepaymentSchedule schedule : scheduleRepository.findByLoanIdOrderByDueDate(loan.getId())) {
+            if (remainingPayment.signum() == 0) break;
 
-        BigDecimal remainingInterest = scheduledInterest.subtract(allocatedInterest).max(BigDecimal.ZERO);
-        BigDecimal remainingPrincipal = loan.getPrincipal().subtract(allocatedPrincipal).max(BigDecimal.ZERO);
+            BigDecimal interestOpen = schedule.getInterestDue()
+                    .subtract(schedule.getInterestPaid()).max(BigDecimal.ZERO);
+            BigDecimal principalOpen = schedule.getPrincipalDue()
+                    .subtract(schedule.getPrincipalPaid()).max(BigDecimal.ZERO);
 
-        BigDecimal interest = payment.getAmount().min(remainingInterest);
-        BigDecimal principal = payment.getAmount().subtract(interest);
+            BigDecimal interest = remainingPayment.min(interestOpen);
+            remainingPayment = remainingPayment.subtract(interest);
 
-        if (principal.compareTo(remainingPrincipal) > 0) {
-            throw new IllegalStateException("Payment exceeds remaining contractual obligation");
-        }
-
-        PaymentAllocation allocation = repository.save(new PaymentAllocation(
-                payment, loan, principal, interest, BigDecimal.ZERO));
-
-        applyToSchedule(loan.getId(), interest, principal);
-        return allocation;
-    }
-
-    private void applyToSchedule(UUID loanId, BigDecimal interestAmount, BigDecimal principalAmount) {
-        BigDecimal remainingInterest = interestAmount;
-        BigDecimal remainingPrincipal = principalAmount;
-
-        for (RepaymentSchedule schedule : scheduleRepository.findByLoanIdOrderByDueDate(loanId)) {
-            BigDecimal interestOpen = schedule.getInterestDue().subtract(schedule.getInterestPaid()).max(BigDecimal.ZERO);
-            BigDecimal principalOpen = schedule.getPrincipalDue().subtract(schedule.getPrincipalPaid()).max(BigDecimal.ZERO);
-
-            BigDecimal interest = remainingInterest.min(interestOpen);
-            remainingInterest = remainingInterest.subtract(interest);
-
-            BigDecimal principal = remainingPrincipal.min(principalOpen);
-            remainingPrincipal = remainingPrincipal.subtract(principal);
+            BigDecimal principal = remainingPayment.min(principalOpen);
+            remainingPayment = remainingPayment.subtract(principal);
 
             if (interest.signum() > 0 || principal.signum() > 0) {
                 schedule.applyPayment(principal, interest);
                 scheduleRepository.save(schedule);
+                totalInterest = totalInterest.add(interest);
+                totalPrincipal = totalPrincipal.add(principal);
             }
-
-            if (remainingInterest.signum() == 0 && remainingPrincipal.signum() == 0) break;
         }
 
-        if (remainingInterest.signum() > 0 || remainingPrincipal.signum() > 0) {
-            throw new IllegalStateException("Payment allocation could not be applied to repayment schedule");
+        if (remainingPayment.signum() > 0) {
+            throw new IllegalStateException("Payment exceeds remaining contractual obligation");
         }
+
+        return repository.save(new PaymentAllocation(
+                payment, loan, totalPrincipal, totalInterest, BigDecimal.ZERO));
     }
 
     @Transactional(readOnly = true)
