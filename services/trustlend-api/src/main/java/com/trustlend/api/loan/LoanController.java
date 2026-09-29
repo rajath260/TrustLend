@@ -1,6 +1,7 @@
 package com.trustlend.api.loan;
 
 import com.trustlend.api.agreement.AgreementService;
+import com.trustlend.api.api.LoanResponse;
 import com.trustlend.api.audit.AuditEventService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -23,17 +24,17 @@ public class LoanController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Loan create(@Valid @RequestBody CreateLoanRequest request) {
+    public LoanResponse create(@Valid @RequestBody CreateLoanRequest request) {
         Loan loan = service.create(request);
         agreementService.createInitial(loan);
         auditEventService.record(loan.getId(), "LoanCreated", "LENDER",
                 "principal=" + loan.getPrincipal() + ";apr=" + loan.getApr());
-        return loan;
+        return LoanResponse.from(loan);
     }
 
     @GetMapping("/{loanId}")
-    public Loan get(@PathVariable UUID loanId) {
-        return service.get(loanId);
+    public LoanResponse get(@PathVariable UUID loanId) {
+        return LoanResponse.from(service.get(loanId));
     }
 
 }
