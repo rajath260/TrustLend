@@ -20,6 +20,20 @@ export type Settlement = {
   status: string; settlementDate: string;
 };
 
+export type RepaymentRecord = {
+  userId: string;
+  lendingActivity: RepaymentActivity;
+  borrowingActivity: RepaymentActivity;
+};
+
+export type RepaymentActivity = {
+  loanCount: number;
+  settledLoanCount: number;
+  principalAmount: string;
+  principalRepaid: string;
+  principalOutstanding: string;
+};
+
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -62,5 +76,8 @@ export function settleLoan(loanId: string) {
 }
 export function getSettlement(loanId: string) {
   return request<Settlement>(`/api/v1/loans/${loanId}/settlement`);
+}
+export function getRepaymentRecord(userId: string) {
+  return request<RepaymentRecord>(`/api/v1/users/${userId}/repayment-record`);
 }
 export function getApiBaseUrl() { return API_BASE_URL; }
