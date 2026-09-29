@@ -1,6 +1,7 @@
 package com.trustlend.api.repayment;
 
 import org.springframework.http.HttpStatus;
+import com.trustlend.api.api.RepaymentScheduleResponse;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
@@ -13,12 +14,12 @@ public class RepaymentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public List<RepaymentSchedule> create(@PathVariable UUID loanId, @RequestParam(defaultValue = "4") int installments) {
-        return service.createEqualPrincipalSchedule(loanId, installments);
+    public List<RepaymentScheduleResponse> create(@PathVariable UUID loanId, @RequestParam(defaultValue = "4") int installments) {
+        return service.createEqualPrincipalSchedule(loanId, installments).stream().map(RepaymentScheduleResponse::from).toList();
     }
 
     @GetMapping
-    public List<RepaymentSchedule> get(@PathVariable UUID loanId) {
-        return service.getSchedule(loanId);
+    public List<RepaymentScheduleResponse> get(@PathVariable UUID loanId) {
+        return service.getSchedule(loanId).stream().map(RepaymentScheduleResponse::from).toList();
     }
 }
