@@ -14,4 +14,4 @@ Initial screens:
 - Settlement Statement
 - Repayment Record
 
-Implementation will be added after the backend domain/API foundation is established.
+The initial Expo/React Native shell is now present. The next mobile iteration will split this shell into typed screens and connect it to the backend API.
