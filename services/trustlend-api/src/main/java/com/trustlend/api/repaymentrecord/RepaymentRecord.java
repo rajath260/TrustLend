@@ -5,8 +5,13 @@ import java.util.UUID;
 
 public record RepaymentRecord(
         UUID userId,
-        long totalLoans,
-        long settledLoans,
-        BigDecimal principalOriginated,
-        BigDecimal principalRepaid,
-        BigDecimal principalOutstanding) {}
+        Activity lendingActivity,
+        Activity borrowingActivity) {
+
+    public record Activity(
+            long loanCount,
+            long settledLoanCount,
+            BigDecimal principalAmount,
+            BigDecimal principalRepaid,
+            BigDecimal principalOutstanding) {}
+}
