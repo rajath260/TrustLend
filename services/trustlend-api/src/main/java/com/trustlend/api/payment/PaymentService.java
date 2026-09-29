@@ -16,14 +16,17 @@ public class PaymentService {
     private final LoanService loanService;
     private final PaymentAllocationService allocationService;
     private final AuditEventService auditEventService;
+    private final PaymentProvider paymentProvider;
 
     public PaymentService(PaymentRepository repository, LoanService loanService,
                           PaymentAllocationService allocationService,
-                          AuditEventService auditEventService) {
+                          AuditEventService auditEventService,
+                          PaymentProvider paymentProvider) {
         this.repository = repository;
         this.loanService = loanService;
         this.allocationService = allocationService;
         this.auditEventService = auditEventService;
+        this.paymentProvider = paymentProvider;
     }
 
     @Transactional
@@ -44,7 +47,9 @@ public class PaymentService {
         if (loan.getStatus() == LoanStatus.SETTLED)
             throw new IllegalStateException("Settled loan cannot receive a payment");
 
-        Payment payment = repository.save(new Payment(loan, amount, idempotencyKey, providerReference));
+        PaymentProvider.ProviderPayment providerPayment = paymentProvider.recordPayment(
+                loanId, amount, idempotencyKey, providerReference);
+        Payment payment = repository.save(new Payment(loan, amount, idempotencyKey, providerPayment.providerReference()));
         allocationService.allocateContractualOrder(payment);
         loan.markPartiallyPaid();
         auditEventService.record(loanId, "PaymentReconciled", "SYSTEM",
