@@ -45,11 +45,11 @@ public class PaymentService {
             throw new IllegalStateException("Settled loan cannot receive a payment");
 
         Payment payment = repository.save(new Payment(loan, amount, idempotencyKey, providerReference));
-        allocationService.allocatePrincipalOnly(payment);
+        allocationService.allocateContractualOrder(payment);
         auditEventService.record(loanId, "PaymentReconciled", "SYSTEM",
                 "paymentId=" + payment.getId() + ";amount=" + amount);
         auditEventService.record(loanId, "PaymentAllocated", "SYSTEM",
-                "paymentId=" + payment.getId() + ";principal=" + amount);
+                "paymentId=" + payment.getId() + ";amount=" + amount);
         return payment;
     }
 
