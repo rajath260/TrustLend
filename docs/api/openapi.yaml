@@ -8,66 +8,84 @@ servers:
 paths:
   /api/v1/loans:
     post:
-      summary: Create a loan
+      summary: Create a loan and immutable agreement snapshot
       responses:
-        '201':
-          description: Loan created
-    get:
-      summary: List loans for the current user
-      responses:
-        '200':
-          description: Loan list
+        '201': { description: Loan created }
   /api/v1/loans/{loanId}:
     get:
       summary: Get loan
       parameters:
-        - in: path
-          name: loanId
-          required: true
-          schema:
-            type: string
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200':
-          description: Loan
+        '200': { description: Loan }
   /api/v1/loans/{loanId}/accept:
     post:
-      summary: Accept a loan agreement
+      summary: Accept the current agreement as the borrower
       responses:
-        '200':
-          description: Loan accepted
-  /api/v1/loans/{loanId}/reject:
+        '200': { description: Loan accepted }
+  /api/v1/loans/{loanId}/agreement:
+    get:
+      summary: Get current immutable agreement
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Agreement }
+  /api/v1/loans/{loanId}/agreement/accept:
     post:
-      summary: Reject a loan agreement
+      summary: Accept agreement with borrower actor identity
       responses:
-        '200':
-          description: Loan rejected
+        '200': { description: Agreement accepted }
   /api/v1/loans/{loanId}/schedule:
+    post:
+      summary: Create repayment schedule
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: installments, required: false, schema: { type: integer, minimum: 1, default: 4 } }
+      responses:
+        '200': { description: Repayment schedule }
     get:
       summary: Get repayment schedule
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200':
-          description: Repayment schedule
-  /api/v1/loans/{loanId}/repayments:
+        '200': { description: Repayment schedule }
+  /api/v1/loans/{loanId}/payments:
     post:
-      summary: Record a repayment event
+      summary: Record an MVP reconciled payment
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '201':
-          description: Repayment recorded
-  /api/v1/payments/intents:
-    post:
-      summary: Create a payment intent
-      responses:
-        '201':
-          description: Payment intent created
-  /api/v1/payments/{paymentId}:
+        '201': { description: Payment recorded }
     get:
-      summary: Get payment status
+      summary: Get payments
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200':
-          description: Payment status
+        '200': { description: Payments }
+  /api/v1/loans/{loanId}/settlement:
+    post:
+      summary: Generate settlement when outstanding is zero
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Settlement statement }
+    get:
+      summary: Get settlement statement
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Settlement statement }
+  /api/v1/loans/{loanId}/audit-events:
+    get:
+      summary: Get immutable audit events
+      parameters:
+        - { in: path, name: loanId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Audit events }
   /api/v1/users/{userId}/repayment-record:
     get:
       summary: Get factual TrustLend repayment record
+      parameters:
+        - { in: path, name: userId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200':
-          description: Repayment record
+        '200': { description: Factual repayment record; no trust score }
