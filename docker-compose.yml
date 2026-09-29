@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: trustlend-postgres
+    environment:
+      POSTGRES_DB: trustlend
+      POSTGRES_USER: trustlend
+      POSTGRES_PASSWORD: trustlend
+    ports:
+      - "5432:5432"
+    volumes:
+      - trustlend-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  trustlend-postgres-data:
