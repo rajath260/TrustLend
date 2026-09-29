@@ -60,6 +60,10 @@ class LoanSettlementFlowIntegrationTest {
                 loan.getId(), new BigDecimal("5000.00"), "idem-4", "provider-4");
         assertNotNull(duplicate);
 
+        var paidSchedule = repaymentService.getSchedule(loan.getId());
+        assertTrue(paidSchedule.stream().allMatch(s -> s.getStatus().name().equals("PAID")));
+        assertTrue(paidSchedule.stream().allMatch(s -> s.getOutstanding().signum() == 0));
+
         var settlement = settlementService.settle(loan.getId());
         assertEquals(new BigDecimal("20000.00"), settlement.getTotalObligation());
         assertEquals(BigDecimal.ZERO.setScale(2), settlement.getOutstanding());
@@ -87,5 +91,11 @@ class LoanSettlementFlowIntegrationTest {
         assertEquals(new BigDecimal("20800.00"),
                 schedule.stream().map(s -> s.getTotalDue())
                         .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        paymentService.record(loan.getId(), new BigDecimal("5200.00"), "interest-test-1", "provider-interest-1");
+        var partiallyPaid = repaymentService.getSchedule(loan.getId());
+        assertEquals(new BigDecimal("200.00"), partiallyPaid.get(0).getInterestPaid());
+        assertEquals(new BigDecimal("5000.00"), partiallyPaid.get(0).getPrincipalPaid());
+        assertEquals(new BigDecimal("0.00"), partiallyPaid.get(0).getOutstanding());
     }
 }
