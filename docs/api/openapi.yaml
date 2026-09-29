@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: TrustLend API
+  version: 0.1.0
+  description: MVP API contract for TrustLend.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/v1/loans:
+    post:
+      summary: Create a loan
+      responses:
+        '201':
+          description: Loan created
+    get:
+      summary: List loans for the current user
+      responses:
+        '200':
+          description: Loan list
+  /api/v1/loans/{loanId}:
+    get:
+      summary: Get loan
+      parameters:
+        - in: path
+          name: loanId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Loan
+  /api/v1/loans/{loanId}/accept:
+    post:
+      summary: Accept a loan agreement
+      responses:
+        '200':
+          description: Loan accepted
+  /api/v1/loans/{loanId}/reject:
+    post:
+      summary: Reject a loan agreement
+      responses:
+        '200':
+          description: Loan rejected
+  /api/v1/loans/{loanId}/schedule:
+    get:
+      summary: Get repayment schedule
+      responses:
+        '200':
+          description: Repayment schedule
+  /api/v1/loans/{loanId}/repayments:
+    post:
+      summary: Record a repayment event
+      responses:
+        '201':
+          description: Repayment recorded
+  /api/v1/payments/intents:
+    post:
+      summary: Create a payment intent
+      responses:
+        '201':
+          description: Payment intent created
+  /api/v1/payments/{paymentId}:
+    get:
+      summary: Get payment status
+      responses:
+        '200':
+          description: Payment status
+  /api/v1/users/{userId}/repayment-record:
+    get:
+      summary: Get factual TrustLend repayment record
+      responses:
+        '200':
+          description: Repayment record
