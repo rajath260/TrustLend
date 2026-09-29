@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { SafeAreaView, StyleSheet, Text, TextInput, View, Pressable, ActivityIndicator, ScrollView } from "react-native";
 import {
   acceptAgreement, createLoan, createSchedule, getApiBaseUrl, getLoan, getSchedule,
-  getPayments, getSettlement, recordPayment, settleLoan, Loan, ScheduleItem, Settlement
+  getRepaymentRecord, recordPayment, getSettlement, settleLoan, Loan, ScheduleItem,
+  Settlement, RepaymentRecord
 } from "./src/api";
 
-type Screen = "home" | "create" | "details" | "schedule" | "payment" | "settlement";
+type Screen = "home" | "create" | "details" | "schedule" | "payment" | "settlement" | "record";
 const DEMO_LENDER_ID = "00000000-0000-0000-0000-000000000001";
 const DEMO_BORROWER_ID = "00000000-0000-0000-0000-000000000002";
 
@@ -14,6 +15,7 @@ export default function App() {
   const [loan, setLoan] = useState<Loan | null>(null);
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
+  const [repaymentRecord, setRepaymentRecord] = useState<RepaymentRecord | null>(null);
   const [principal, setPrincipal] = useState("20000");
   const [apr, setApr] = useState("0");
   const [interestMethod, setInterestMethod] = useState<"NONE" | "SIMPLE">("NONE");
@@ -77,6 +79,13 @@ export default function App() {
     await run(async () => { setSettlement(await getSettlement(loan.id)); setScreen("settlement"); });
   }
 
+  async function handleRepaymentRecord(userId: string) {
+    await run(async () => {
+      setRepaymentRecord(await getRepaymentRecord(userId));
+      setScreen("record");
+    });
+  }
+
   if (screen === "create") return <Page onBack={() => setScreen("home")}>
     <Text style={styles.eyebrow}>CREATE LOAN</Text><Text style={styles.title}>Set clear terms.</Text>
     <Text style={styles.subtitle}>The borrower will review and explicitly accept the agreement.</Text>
@@ -103,6 +112,7 @@ export default function App() {
       <Action label="Generate settlement" onPress={handleSettlement} loading={loading}/>
     </> : null}
     {loan.status === "SETTLED" ? <Action label="View settlement statement" onPress={showExistingSettlement} loading={loading}/> : null}
+    <Action label="View repayment record" onPress={() => handleRepaymentRecord(DEMO_LENDER_ID)} loading={loading}/>
     {message ? <Text style={styles.error}>{message}</Text> : null}
     <Text style={styles.note}>Demo identities and mock payment references are used only for MVP development.</Text>
   </Page>;
@@ -131,12 +141,33 @@ export default function App() {
     {message ? <Text style={styles.error}>{message}</Text> : null}
   </Page>;
 
+  if (screen === "record" && repaymentRecord) return <Page onBack={() => setScreen("details")}>
+    <Text style={styles.eyebrow}>REPAYMENT RECORD</Text><Text style={styles.title}>Factual activity</Text>
+    <Text style={styles.subtitle}>TrustLend records activity; it does not assign a trust score or decide whether someone is trustworthy.</Text>
+    <ActivityCard title="Lending activity" activity={repaymentRecord.lendingActivity} />
+    <ActivityCard title="Borrowing activity" activity={repaymentRecord.borrowingActivity} />
+    <Text style={styles.note}>These figures describe recorded TrustLend activity only and are not a credit score or creditworthiness assessment.</Text>
+    {message ? <Text style={styles.error}>{message}</Text> : null}
+  </Page>;
+
   return <SafeAreaView style={styles.container}><View style={styles.content}>
     <Text style={styles.eyebrow}>TRUSTLEND</Text><Text style={styles.title}>Lend with clarity.</Text>
     <Text style={styles.subtitle}>Formalize a trusted-person loan with clear terms, repayment tracking, and settlement.</Text>
     <View style={styles.card}><Text style={styles.cardTitle}>MVP financial flow</Text><Text style={styles.flow}>Agreement → Acceptance → Repayment → Settlement</Text><Action label="Create a loan" onPress={() => {setMessage(""); setScreen("create");}} loading={false}/></View>
+    <Action label="View demo repayment record" onPress={() => handleRepaymentRecord(DEMO_LENDER_ID)} loading={loading}/>
     <Text style={styles.note}>API: {getApiBaseUrl()}</Text><Text style={styles.note}>TrustLend does not calculate a trust score. It records factual repayment activity.</Text>
+    {message ? <Text style={styles.error}>{message}</Text> : null}
   </View></SafeAreaView>;
+}
+
+function ActivityCard({title, activity}:{title:string; activity:RepaymentRecord["lendingActivity"]}) {
+  return <View style={styles.card}><Text style={styles.cardTitle}>{title}</Text>
+    <Row label="Loans" value={String(activity.loanCount)}/>
+    <Row label="Settled loans" value={String(activity.settledLoanCount)}/>
+    <Row label="Principal" value={`₹${activity.principalAmount}`}/>
+    <Row label="Principal repaid" value={`₹${activity.principalRepaid}`}/>
+    <Row label="Principal outstanding" value={`₹${activity.principalOutstanding}`}/>
+  </View>;
 }
 
 function Page({children,onBack}:{children:React.ReactNode;onBack:()=>void}) {
