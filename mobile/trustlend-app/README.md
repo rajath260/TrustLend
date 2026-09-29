@@ -1,17 +1,36 @@
 # TrustLend Mobile App
 
-React Native + TypeScript application planned for the MVP.
+React Native + TypeScript MVP shell.
 
-Initial screens:
-- Login/Register
+## Current flow
+
 - Home
 - Create Loan
-- Loan Details
+- Agreement creation through the backend
+- Loan details
+- Borrower agreement acceptance
+- Backend API error handling
+
+The current shell uses deterministic demo lender/borrower UUIDs. This is intentional for the MVP development flow; production authentication will replace them.
+
+## API configuration
+
+Set the Expo environment variable:
+
+```text
+EXPO_PUBLIC_API_URL=http://localhost:8080
+```
+
+For a physical device, replace `localhost` with a reachable development machine/API address.
+
+## Planned next screens
+
 - Agreement Review
-- Borrower Acceptance
 - Repayment Schedule
-- Payment
+- Record Payment
 - Settlement Statement
 - Repayment Record
 
-The initial Expo/React Native shell is now present. The next mobile iteration will split this shell into typed screens and connect it to the backend API.
+## Product boundary
+
+TrustLend does not calculate a trust score or make a proprietary creditworthiness decision. It records factual repayment activity.
