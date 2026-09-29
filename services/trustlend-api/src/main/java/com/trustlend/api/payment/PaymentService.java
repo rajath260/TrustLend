@@ -46,6 +46,7 @@ public class PaymentService {
 
         Payment payment = repository.save(new Payment(loan, amount, idempotencyKey, providerReference));
         allocationService.allocateContractualOrder(payment);
+        loan.markPartiallyPaid();
         auditEventService.record(loanId, "PaymentReconciled", "SYSTEM",
                 "paymentId=" + payment.getId() + ";amount=" + amount);
         auditEventService.record(loanId, "PaymentAllocated", "SYSTEM",
