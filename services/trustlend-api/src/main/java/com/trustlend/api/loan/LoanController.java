@@ -36,11 +36,4 @@ public class LoanController {
         return service.get(loanId);
     }
 
-    @PostMapping("/{loanId}/accept")
-    public Loan accept(@PathVariable UUID loanId, @RequestBody AgreementAcceptanceRequest request) {
-        agreementService.accept(loanId, request.actorId());
-        return service.get(loanId);
-    }
-
-    public record AgreementAcceptanceRequest(UUID actorId) {}
 }
