@@ -1,6 +1,7 @@
 package com.trustlend.api.agreement;
 
 import com.trustlend.api.api.AgreementResponse;
+import com.trustlend.api.security.ActorIdentity;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
@@ -18,6 +19,6 @@ public class AgreementController {
 
     @PostMapping("/accept")
     public AgreementResponse accept(@PathVariable UUID loanId, @RequestBody AcceptAgreementRequest request) {
-        return AgreementResponse.from(service.accept(loanId, request.actorId()));
+        return AgreementResponse.from(service.accept(loanId, new ActorIdentity(request.actorId())));
     }
 }
