@@ -3,6 +3,8 @@ package com.trustlend.api.agreement;
 import com.trustlend.api.audit.AuditEventService;
 import com.trustlend.api.loan.Loan;
 import com.trustlend.api.loan.LoanService;
+import com.trustlend.api.security.ActorIdentity;
+import com.trustlend.api.security.LoanAuthorizationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
@@ -15,12 +17,15 @@ public class AgreementService {
     private final AgreementRepository repository;
     private final LoanService loanService;
     private final AuditEventService auditEventService;
+    private final LoanAuthorizationService authorizationService;
 
     public AgreementService(AgreementRepository repository, LoanService loanService,
-                            AuditEventService auditEventService) {
+                            AuditEventService auditEventService,
+                            LoanAuthorizationService authorizationService) {
         this.repository = repository;
         this.loanService = loanService;
         this.auditEventService = auditEventService;
+        this.authorizationService = authorizationService;
     }
 
     @Transactional
@@ -33,18 +38,16 @@ public class AgreementService {
     }
 
     @Transactional
-    public Agreement accept(UUID loanId, UUID actorId) {
+    public Agreement accept(UUID loanId, ActorIdentity actor) {
         Loan loan = loanService.get(loanId);
         Agreement agreement = repository.findByLoanIdAndVersion(loanId, loan.getAgreementVersion())
                 .orElseThrow(() -> new IllegalStateException("Agreement version not found"));
-        if (!loan.getBorrowerId().equals(actorId)) {
-            throw new IllegalArgumentException("Only the borrower can accept the agreement");
-        }
-        agreement.accept(actorId);
+        authorizationService.requireBorrower(loan, actor);
+        agreement.accept(actor.userId());
         loanService.accept(loanId);
         Agreement saved = repository.save(agreement);
         auditEventService.record(loanId, "LoanAccepted", "BORROWER",
-                "agreementVersion=" + agreement.getVersion() + ";actorId=" + actorId);
+                "agreementVersion=" + agreement.getVersion() + ";actorId=" + actor.userId());
         return saved;
     }
 
