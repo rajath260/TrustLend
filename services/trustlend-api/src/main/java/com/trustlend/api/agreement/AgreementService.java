@@ -27,7 +27,8 @@ public class AgreementService {
     public Agreement createInitial(Loan loan) {
         String snapshot = "Loan " + loan.getId() + " | principal=" + loan.getPrincipal()
                 + " | apr=" + loan.getApr() + " | interestMethod=" + loan.getInterestMethod()
-                + " | startDate=" + loan.getStartDate() + " | maturityDate=" + loan.getMaturityDate();
+                + " | startDate=" + loan.getStartDate() + " | maturityDate=" + loan.getMaturityDate()
+                + " | productPolicyVersion=" + loan.getProductPolicyVersion();
         return repository.save(new Agreement(loan, loan.getAgreementVersion(), sha256(snapshot), snapshot));
     }
 
