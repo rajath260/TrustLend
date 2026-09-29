@@ -7,6 +7,7 @@ import com.trustlend.api.loan.LoanService;
 import com.trustlend.api.loan.LoanStatus;
 import com.trustlend.api.payment.PaymentService;
 import com.trustlend.api.repayment.RepaymentService;
+import com.trustlend.api.repaymentrecord.RepaymentRecordService;
 import com.trustlend.api.settlement.SettlementService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ class LoanSettlementFlowIntegrationTest {
     @Autowired RepaymentService repaymentService;
     @Autowired PaymentService paymentService;
     @Autowired SettlementService settlementService;
+    @Autowired RepaymentRecordService repaymentRecordService;
 
     @Test
     void interestFreeLoanCanBeRepaidAndSettled() {
@@ -97,5 +99,34 @@ class LoanSettlementFlowIntegrationTest {
         assertEquals(new BigDecimal("200.00"), partiallyPaid.get(0).getInterestPaid());
         assertEquals(new BigDecimal("5000.00"), partiallyPaid.get(0).getPrincipalPaid());
         assertEquals(new BigDecimal("0.00"), partiallyPaid.get(0).getOutstanding());
+    }
+
+    @Test
+    void repaymentRecordSeparatesLendingAndBorrowingActivity() {
+        UUID lender = UUID.randomUUID();
+        UUID borrower = UUID.randomUUID();
+
+        Loan loan = loanService.create(new CreateLoanRequest(
+                lender, borrower, new BigDecimal("10000.00"), BigDecimal.ZERO,
+                "NONE", LocalDate.of(2026, 10, 1), LocalDate.of(2027, 2, 1)));
+
+        agreementService.createInitial(loan);
+        agreementService.accept(loan.getId(), borrower);
+        repaymentService.createEqualPrincipalSchedule(loan.getId(), 2);
+        paymentService.record(loan.getId(), new BigDecimal("5000.00"), "record-test-1", "provider-record-1");
+
+        var lenderRecord = repaymentRecordService.get(lender);
+        assertEquals(1, lenderRecord.lendingActivity().loanCount());
+        assertEquals(new BigDecimal("10000.00"), lenderRecord.lendingActivity().principalAmount());
+        assertEquals(new BigDecimal("5000.00"), lenderRecord.lendingActivity().principalRepaid());
+        assertEquals(new BigDecimal("5000.00"), lenderRecord.lendingActivity().principalOutstanding());
+        assertEquals(0, lenderRecord.borrowingActivity().loanCount());
+
+        var borrowerRecord = repaymentRecordService.get(borrower);
+        assertEquals(1, borrowerRecord.borrowingActivity().loanCount());
+        assertEquals(new BigDecimal("10000.00"), borrowerRecord.borrowingActivity().principalAmount());
+        assertEquals(new BigDecimal("5000.00"), borrowerRecord.borrowingActivity().principalRepaid());
+        assertEquals(new BigDecimal("5000.00"), borrowerRecord.borrowingActivity().principalOutstanding());
+        assertEquals(0, borrowerRecord.lendingActivity().loanCount());
     }
 }
