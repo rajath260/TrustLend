@@ -30,6 +30,7 @@ class LoanSettlementFlowIntegrationTest {
     @Autowired PaymentService paymentService;
     @Autowired SettlementService settlementService;
     @Autowired RepaymentRecordService repaymentRecordService;
+    @Autowired com.trustlend.api.payment.PaymentProvider paymentProvider;
 
     @Test
     void interestFreeLoanCanBeRepaidAndSettled() {
@@ -99,6 +100,13 @@ class LoanSettlementFlowIntegrationTest {
         assertEquals(new BigDecimal("200.00"), partiallyPaid.get(0).getInterestPaid());
         assertEquals(new BigDecimal("5000.00"), partiallyPaid.get(0).getPrincipalPaid());
         assertEquals(new BigDecimal("0.00"), partiallyPaid.get(0).getOutstanding());
+    }
+
+    @Test
+    void mockPaymentProviderIsAvailableBehindPaymentBoundary() {
+        assertInstanceOf(com.trustlend.api.payment.MockPaymentProvider.class, paymentProvider);
+        var result = paymentProvider.recordPayment(UUID.randomUUID(), new BigDecimal("10.00"), "provider-boundary", "mock-ref");
+        assertEquals("mock-ref", result.providerReference());
     }
 
     @Test
